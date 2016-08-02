@@ -2,8 +2,17 @@
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"flag"
+)
 
 func main() {
-    fmt.Println("Hello World!")
+	addonsDirectory := flag.String("addons-directory", "c:\\Games\\World of Warcraft\\Interface\\AddOns\\", "Path to the Addons folder")
+
+	flag.Parse()
+
+	//argsWithoutProg := os.Args[1:]
+	fmt.Println("Hello World!")
+	fmt.Println("Dir:", *addonsDirectory)
 }
