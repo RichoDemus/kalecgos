@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"net/http"
 	"os"
+	"io"
 )
 
 func main() {
@@ -42,9 +43,14 @@ func main() {
 		}
 	}
 
-	for key, value := range addons {
-		fmt.Println("Key:", key)
-		fmt.Println("Value:", value)
+	for id, version := range addons {
+		fmt.Println("Checking addon " + id)
+		fmt.Println("Installed version " + version)
+		url := createAddonUrl(id)
+		fmt.Println("Addon url: " + url)
+		page := getWebpage(url)
+		newestVersion := getAddonVersionFromCurseWebpage(page)
+		fmt.Println("Latest version " + newestVersion)
 	}
 }
 
@@ -65,7 +71,12 @@ func getAddonProperties(tocFile string) (string, string) {
 	return id[1], version[1]
 }
 
+func createAddonUrl(id string) string {
+	return "https://mods.curse.com/addons/wow/" + id
+}
+
 func getWebpage(url string) string {
+	fmt.Println("Accessing " + url)
 	response, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -73,12 +84,20 @@ func getWebpage(url string) string {
 		return ""
 	} else {
 		defer response.Body.Close()
-		bs, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			log.Fatal(err)
+		if response.StatusCode != 200 {
+			log.Println("Wrong status code: " + response.Status)
+			log.Fatal("Body: " + responseToString(response.Body))
 		}
-		return string(bs)
+		return string(responseToString(response.Body))
 	}
+}
+
+func responseToString(body io.ReadCloser) string {
+	bs, err := ioutil.ReadAll(body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(bs)
 }
 
 func getAddonVersionFromCurseWebpage(html string) string {

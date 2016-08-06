@@ -18,10 +18,20 @@ func TestParseTocFile(t *testing.T) {
 	}
 }
 
+func TestCreateAddonURL(t *testing.T) {
+	result := createAddonUrl("deadly-boss-mods")
+
+	if result != "https://mods.curse.com/addons/wow/deadly-boss-mods" {
+		t.Log("Wrong url: " + result)
+		t.Fail()
+	}
+}
+
 func TestWebpage(t *testing.T) {
 	body := getWebpage("https://richodemus.com")
 	println(body)
 }
+
 func TestParseVersionFromPage(t *testing.T) {
 	version := getAddonVersionFromCurseWebpage(`<li class="newest-file">Newest File: 7.0.3.7</li>`)
 
