@@ -18,6 +18,10 @@ func TestParseTocFile(t *testing.T) {
 	}
 }
 
+func TestWebpage(t *testing.T) {
+	body := getWebpage("https://richodemus.com")
+	println(body)
+}
 func TestParseVersionFromPage(t *testing.T) {
 	version := getAddonVersionFromCurseWebpage(`<li class="newest-file">Newest File: 7.0.3.7</li>`)
 

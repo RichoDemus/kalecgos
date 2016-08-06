@@ -9,6 +9,8 @@ import (
 	"strings"
 	"log"
 	"regexp"
+	"net/http"
+	"os"
 )
 
 func main() {
@@ -19,7 +21,7 @@ func main() {
 
 	fmt.Println("Dir:", addonsDirectory)
 
-	var addons = make(map[string] string)
+	var addons = make(map[string]string)
 
 	addonDirectories, _ := ioutil.ReadDir(addonsDirectory)
 	for _, addonDirectory := range addonDirectories {
@@ -32,7 +34,7 @@ func main() {
 			if strings.HasSuffix(addonFile.Name(), ".toc") {
 				tocFile, err := ioutil.ReadFile(addonsDirectory + "/" + addonDirectory.Name() + "/" + addonFile.Name())
 				if err != nil {
-				    log.Fatal(err)
+					log.Fatal(err)
 				}
 				id, version := getAddonProperties(string(tocFile))
 				addons[id] = version
@@ -45,7 +47,6 @@ func main() {
 		fmt.Println("Value:", value)
 	}
 }
-
 
 func getAddonProperties(tocFile string) (string, string) {
 	pattern, err := regexp.Compile(`X-Curse-Project-ID: (.*)`)
@@ -62,6 +63,22 @@ func getAddonProperties(tocFile string) (string, string) {
 	version := pattern.FindStringSubmatch(tocFile)
 
 	return id[1], version[1]
+}
+
+func getWebpage(url string) string {
+	response, err := http.Get(url)
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+		return ""
+	} else {
+		defer response.Body.Close()
+		bs, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return string(bs)
+	}
 }
 
 func getAddonVersionFromCurseWebpage(html string) string {
