@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"io"
+	"reflect"
 )
 
 func main() {
@@ -48,7 +49,8 @@ func main() {
 		fmt.Println("Installed version " + version)
 		url := createAddonUrl(id)
 		fmt.Println("Addon url: " + url)
-		page := getWebpage(url)
+		page := getWebpage2(url)
+		fmt.Println("Body: " + page)
 		newestVersion := getAddonVersionFromCurseWebpage(page)
 		fmt.Println("Latest version " + newestVersion)
 	}
@@ -90,6 +92,31 @@ func getWebpage(url string) string {
 		}
 		return string(responseToString(response.Body))
 	}
+}
+
+func getWebpage2(url string) string {
+	fmt.Println("GET " + url)
+	fmt.Println(reflect.TypeOf(url))
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/51.0.2704.79 Chrome/51.0.2704.79 Safari/537.36")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return string(body)
 }
 
 func responseToString(body io.ReadCloser) string {

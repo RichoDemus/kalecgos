@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"testing"
+	"fmt"
+)
 
 func TestParseTocFile(t *testing.T) {
 	id, version := getAddonProperties(`## X-Website: http://www.deadlybossmods.com
@@ -28,8 +31,10 @@ func TestCreateAddonURL(t *testing.T) {
 }
 
 func TestWebpage(t *testing.T) {
-	body := getWebpage("https://richodemus.com")
-	println(body)
+	// body := getWebpage2("https://richodemus.com")
+	body := getWebpage2("https://mods.curse.com/addons/wow/deadly-boss-mods")
+
+	fmt.Print(body)
 }
 
 func TestParseVersionFromPage(t *testing.T) {
