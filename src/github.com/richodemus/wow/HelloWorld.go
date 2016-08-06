@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"log"
+	"regexp"
 )
 
 func main() {
@@ -16,12 +17,13 @@ func main() {
 	flag.Parse()
 	addonsDirectory := *addonsDirectoryPointer
 
-	fmt.Println("Hello World!")
 	fmt.Println("Dir:", addonsDirectory)
+
+	var addons = make(map[string] string)
 
 	addonDirectories, _ := ioutil.ReadDir(addonsDirectory)
 	for _, addonDirectory := range addonDirectories {
-		fmt.Println("Addon: " + addonsDirectory +  addonDirectory.Name())
+		// fmt.Println("Addon: " + addonsDirectory +  addonDirectory.Name())
 		filesInAddonDirectory, err := ioutil.ReadDir(addonsDirectory + "/" + addonDirectory.Name() + "/")
 		if err != nil {
 			log.Fatal(err)
@@ -32,10 +34,31 @@ func main() {
 				if err != nil {
 				    log.Fatal(err)
 				}
-				fmt.Println("Tocfile: " + string(tocFile))
-
+				id, version := getAddonProperties(string(tocFile))
+				addons[id] = version
 			}
-
 		}
 	}
+
+	for key, value := range addons {
+		fmt.Println("Key:", key)
+		fmt.Println("Value:", value)
+	}
+}
+
+func getAddonProperties(tocFile string) (string, string) {
+	pattern, err := regexp.Compile(`X-Curse-Project-ID: (.*)`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	id := pattern.FindStringSubmatch(tocFile)
+
+	pattern, err = regexp.Compile(`X-Curse-Packaged-Version: (.*)`)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	version := pattern.FindStringSubmatch(tocFile)
+
+	return id[1], version[1]
 }
