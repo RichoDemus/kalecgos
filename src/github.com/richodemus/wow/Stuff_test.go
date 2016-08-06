@@ -17,3 +17,12 @@ func TestParseTocFile(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestParseVersionFromPage(t *testing.T) {
+	version := getAddonVersionFromCurseWebpage(`<li class="newest-file">Newest File: 7.0.3.7</li>`)
+
+	if version != "7.0.3.7" {
+		t.Log("Wrong version: " + version)
+		t.Fail()
+	}
+}

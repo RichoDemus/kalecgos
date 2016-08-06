@@ -46,6 +46,7 @@ func main() {
 	}
 }
 
+
 func getAddonProperties(tocFile string) (string, string) {
 	pattern, err := regexp.Compile(`X-Curse-Project-ID: (.*)`)
 	if err != nil {
@@ -61,4 +62,13 @@ func getAddonProperties(tocFile string) (string, string) {
 	version := pattern.FindStringSubmatch(tocFile)
 
 	return id[1], version[1]
+}
+
+func getAddonVersionFromCurseWebpage(html string) string {
+	pattern, err := regexp.Compile(`<li class="newest-file">Newest File: (.*)</li>`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	version := pattern.FindStringSubmatch(html)
+	return version[1]
 }
