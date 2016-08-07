@@ -26,7 +26,6 @@ func main() {
 
 	addonDirectories, _ := ioutil.ReadDir(addonsDirectory)
 	for _, addonDirectory := range addonDirectories {
-		// fmt.Println("Addon: " + addonsDirectory +  addonDirectory.Name())
 		filesInAddonDirectory, err := ioutil.ReadDir(addonsDirectory + "/" + addonDirectory.Name() + "/")
 		if err != nil {
 			log.Fatal(err)
@@ -48,12 +47,7 @@ func main() {
 		url := createAddonUrl(id)
 		fmt.Println("Addon url: " + url)
 		fmt.Println("Installed version " + version)
-		page := getWebpage2(url)
-		//if strings.Trim(url, " ") == "https://mods.curse.com/addons/wow/deadly-boss-mods" {
-		//	fmt.Println("EQUAL")
-		//}
-		//page := getWebpage2("https://mods.curse.com/addons/wow/deadly-boss-mods")
-		// fmt.Println("Body: " + page)
+		page := getWebpage(url)
 		newestVersion := getAddonVersionFromCurseWebpage(page)
 		fmt.Println("Latest version " + newestVersion)
 	}
@@ -64,7 +58,8 @@ func getAddonProperties(tocFile string) (string, string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	id := pattern.FindStringSubmatch(tocFile)
+	rawId := pattern.FindStringSubmatch(tocFile)
+	fixedId :=fixIdString(rawId[1])
 
 	pattern, err = regexp.Compile(`X-Curse-Packaged-Version: (.*)`)
 	if err != nil {
@@ -73,19 +68,23 @@ func getAddonProperties(tocFile string) (string, string) {
 
 	version := pattern.FindStringSubmatch(tocFile)
 
-	return id[1], version[1]
+	return fixedId, version[1]
+}
+
+func fixIdString(id string) string {
+	lastCharacter  := id[len(id)-1:]
+	if lastCharacter[0] == 13 {
+		// For some reason we sometimes get a stray ascii character 13 at the end
+		return id[:len(id)-1]
+	}
+	return id
 }
 
 func createAddonUrl(id string) string {
-	rawUrl := "https://mods.curse.com/addons/wow/" + id
-	// For some reason we get a stray ascii character 13 at the end
-	trimmedUrl:=rawUrl[:len(rawUrl)-1]
-	return trimmedUrl
+	return "https://mods.curse.com/addons/wow/" + id
 }
 
 func getWebpage(url string) string {
-	//fmt.Println("Accessing " + url)
-	//fmt.Println("url bytes: " + string(len(url)))
 	response, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -99,36 +98,6 @@ func getWebpage(url string) string {
 		}
 		return string(responseToString(response.Body))
 	}
-}
-
-func getWebpage2(url string) string {
-	//fmt.Println("GET " + url)
-	//var a [60]byte
-
-	//fmt.Printf("URL [%s]\n", url2)
-	// fmt.Println(reflect.TypeOf(url))
-	//fmt.Printf("url runes: %d\n", utf8.RuneCountInString(url))
-	//fmt.Printf("url bytes: %d\n", len(url))
-	client := &http.Client{}
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/51.0.2704.79 Chrome/51.0.2704.79 Safari/537.36")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	return string(body)
 }
 
 func responseToString(body io.ReadCloser) string {

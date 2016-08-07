@@ -2,14 +2,14 @@ package main
 
 import (
 	"testing"
-	"fmt"
 )
 
 func TestParseTocFile(t *testing.T) {
 	id, version := getAddonProperties(`## X-Website: http://www.deadlybossmods.com
 ## X-Curse-Packaged-Version: 7.0.1
 ## X-Curse-Project-Name: Deadly Boss Mods
-## X-Curse-Project-ID: deadly-boss-mods`)
+## X-Curse-Project-ID: deadly-boss-mods
+## X-Curse-Repository-ID: wow/deadly-boss-mods/mainline`)
 
 	if id != "deadly-boss-mods" {
 		t.Log("Wrong id: " + id)
@@ -28,13 +28,6 @@ func TestCreateAddonURL(t *testing.T) {
 		t.Log("Wrong url: " + result)
 		t.Fail()
 	}
-}
-
-func TestWebpage(t *testing.T) {
-	// body := getWebpage2("https://richodemus.com")
-	body := getWebpage2("https://mods.curse.com/addons/wow/deadly-boss-mods")
-
-	fmt.Print(body)
 }
 
 func TestParseVersionFromPage(t *testing.T) {
