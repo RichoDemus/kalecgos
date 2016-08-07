@@ -43,13 +43,18 @@ func main() {
 	}
 
 	for id, version := range addons {
-		fmt.Println("Checking addon " + id)
+		//fmt.Println("Checking addon " + id)
 		url := createAddonUrl(id)
-		fmt.Println("Addon url: " + url)
-		fmt.Println("Installed version " + version)
+		//fmt.Println("Addon url: " + url)
+		//fmt.Println("Installed version " + version)
 		page := getWebpage(url)
 		newestVersion := getAddonVersionFromCurseWebpage(page)
-		fmt.Println("Latest version " + newestVersion)
+		//fmt.Println("Latest version " + newestVersion)
+		if version != newestVersion {
+			fmt.Println("Found newer version of", id, "(", version, "->", newestVersion, "): ", url)
+		} else {
+			fmt.Println("Addon", id, "(", version, ") is at the latest version")
+		}
 	}
 }
 
@@ -59,25 +64,26 @@ func getAddonProperties(tocFile string) (string, string) {
 		log.Fatal(err)
 	}
 	rawId := pattern.FindStringSubmatch(tocFile)
-	fixedId :=fixIdString(rawId[1])
+	fixedId := fixParsedString(rawId[1])
 
 	pattern, err = regexp.Compile(`X-Curse-Packaged-Version: (.*)`)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	version := pattern.FindStringSubmatch(tocFile)
+	rawVersion := pattern.FindStringSubmatch(tocFile)
+	fixedVersion := fixParsedString(rawVersion[1])
 
-	return fixedId, version[1]
+	return fixedId, fixedVersion
 }
 
-func fixIdString(id string) string {
-	lastCharacter  := id[len(id)-1:]
+func fixParsedString(str string) string {
+	lastCharacter := str[len(str) - 1:]
 	if lastCharacter[0] == 13 {
 		// For some reason we sometimes get a stray ascii character 13 at the end
-		return id[:len(id)-1]
+		return str[:len(str) - 1]
 	}
-	return id
+	return str
 }
 
 func createAddonUrl(id string) string {
