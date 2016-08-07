@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"os"
 	"io"
-	"reflect"
 )
 
 func main() {
@@ -46,11 +45,15 @@ func main() {
 
 	for id, version := range addons {
 		fmt.Println("Checking addon " + id)
-		fmt.Println("Installed version " + version)
 		url := createAddonUrl(id)
 		fmt.Println("Addon url: " + url)
+		fmt.Println("Installed version " + version)
 		page := getWebpage2(url)
-		fmt.Println("Body: " + page)
+		//if strings.Trim(url, " ") == "https://mods.curse.com/addons/wow/deadly-boss-mods" {
+		//	fmt.Println("EQUAL")
+		//}
+		//page := getWebpage2("https://mods.curse.com/addons/wow/deadly-boss-mods")
+		// fmt.Println("Body: " + page)
 		newestVersion := getAddonVersionFromCurseWebpage(page)
 		fmt.Println("Latest version " + newestVersion)
 	}
@@ -74,11 +77,15 @@ func getAddonProperties(tocFile string) (string, string) {
 }
 
 func createAddonUrl(id string) string {
-	return "https://mods.curse.com/addons/wow/" + id
+	rawUrl := "https://mods.curse.com/addons/wow/" + id
+	// For some reason we get a stray ascii character 13 at the end
+	trimmedUrl:=rawUrl[:len(rawUrl)-1]
+	return trimmedUrl
 }
 
 func getWebpage(url string) string {
-	fmt.Println("Accessing " + url)
+	//fmt.Println("Accessing " + url)
+	//fmt.Println("url bytes: " + string(len(url)))
 	response, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -95,8 +102,13 @@ func getWebpage(url string) string {
 }
 
 func getWebpage2(url string) string {
-	fmt.Println("GET " + url)
-	fmt.Println(reflect.TypeOf(url))
+	//fmt.Println("GET " + url)
+	//var a [60]byte
+
+	//fmt.Printf("URL [%s]\n", url2)
+	// fmt.Println(reflect.TypeOf(url))
+	//fmt.Printf("url runes: %d\n", utf8.RuneCountInString(url))
+	//fmt.Printf("url bytes: %d\n", len(url))
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", url, nil)
