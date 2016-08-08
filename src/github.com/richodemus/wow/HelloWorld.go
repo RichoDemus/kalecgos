@@ -22,8 +22,28 @@ func main() {
 
 	fmt.Println("Dir:", addonsDirectory)
 
-	var addons = make(map[string]string)
+	var addons = getAddons(addonsDirectory)
 
+
+	for id, version := range addons {
+		//fmt.Println("Checking addon " + id)
+		url := createAddonUrl(id)
+		//fmt.Println("Addon url: " + url)
+		//fmt.Println("Installed version " + version)
+		page := getWebpage(url)
+		newestVersion := getAddonVersionFromCurseWebpage(page)
+		//fmt.Println("Latest version " + newestVersion)
+		if version != newestVersion {
+			fmt.Println("Found newer version of", id, "(", version, "->", newestVersion, "): ", url)
+		} else {
+			fmt.Println("Addon", id, "(", version, ") is at the latest version")
+		}
+	}
+}
+
+// Takes the path to the addons directory and returns a map where the key is the addon id and the value is the addon version
+func getAddons(addonsDirectory string) map[string]string {
+	var addons = make(map[string]string)
 	addonDirectories, _ := ioutil.ReadDir(addonsDirectory)
 	for _, addonDirectory := range addonDirectories {
 		filesInAddonDirectory, err := ioutil.ReadDir(addonsDirectory + "/" + addonDirectory.Name() + "/")
@@ -41,21 +61,7 @@ func main() {
 			}
 		}
 	}
-
-	for id, version := range addons {
-		//fmt.Println("Checking addon " + id)
-		url := createAddonUrl(id)
-		//fmt.Println("Addon url: " + url)
-		//fmt.Println("Installed version " + version)
-		page := getWebpage(url)
-		newestVersion := getAddonVersionFromCurseWebpage(page)
-		//fmt.Println("Latest version " + newestVersion)
-		if version != newestVersion {
-			fmt.Println("Found newer version of", id, "(", version, "->", newestVersion, "): ", url)
-		} else {
-			fmt.Println("Addon", id, "(", version, ") is at the latest version")
-		}
-	}
+	return addons
 }
 
 func getAddonProperties(tocFile string) (string, string) {
