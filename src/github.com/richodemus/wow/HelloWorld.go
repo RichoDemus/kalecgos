@@ -25,6 +25,14 @@ func main() {
 	var addons = getAddons(addonsDirectory)
 
 
+	f, err := os.Create("addons.html")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	f.WriteString("<html><body><h1>Addons:</h1>\n")
+
 	for id, version := range addons {
 		//fmt.Println("Checking addon " + id)
 		url := createAddonUrl(id)
@@ -35,10 +43,14 @@ func main() {
 		//fmt.Println("Latest version " + newestVersion)
 		if version != newestVersion {
 			fmt.Println("Found newer version of", id, "(", version, "->", newestVersion, "): ", url)
+			f.WriteString("Newer version of " + id + " ( " + version + " -> " + newestVersion + " ): <a href=\"" + url + "\">Curse link</a><br/>\n")
 		} else {
 			fmt.Println("Addon", id, "(", version, ") is at the latest version")
+			f.WriteString("Addon " + id + " ( " + version + " ) is at the latest version<br/>\n")
 		}
 	}
+	f.WriteString("</body></html>")
+	f.Sync()
 }
 
 // Takes the path to the addons directory and returns a map where the key is the addon id and the value is the addon version
