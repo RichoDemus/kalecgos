@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	addonsDirectoryPointer := flag.String("addons-directory", "c:\\Games\\World of Warcraft\\Interface\\AddOns\\", "Path to the Addons folder")
+	addonsDirectoryPointer := flag.String("addons-directory", "Interface/AddOns/", "Path to the Addons folder")
 
 	flag.Parse()
 	addonsDirectory := *addonsDirectoryPointer

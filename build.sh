@@ -1,1 +1,2 @@
-go install github.com/richodemus/wow/
+go install 
+
