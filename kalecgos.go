@@ -1,5 +1,3 @@
-//package wow_display_outdated_addons
-
 package main
 
 import (
