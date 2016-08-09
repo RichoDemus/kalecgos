@@ -1,4 +1,5 @@
 # Kalecgos
+[![Build Status](https://travis-ci.org/RichoDemus/kalecgos.svg?branch=master)](https://travis-ci.org/RichoDemus/kalecgos)
 ## What?
 A lightweight alternative to Curse Client
 
