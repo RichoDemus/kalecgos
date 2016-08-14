@@ -66,20 +66,26 @@ func getAddons(addonsDirectory string) map[string]string {
 				if err != nil {
 					log.Fatal(err)
 				}
-				id, version := getAddonProperties(string(tocFile))
-				addons[id] = version
+				id, version := getAddonProperties(addonDirectory.Name(), string(tocFile))
+				if id != "" {
+					addons[id] = version
+				}
 			}
 		}
 	}
 	return addons
 }
 
-func getAddonProperties(tocFile string) (string, string) {
+func getAddonProperties(addon string, tocFile string) (string, string) {
 	pattern, err := regexp.Compile(`X-Curse-Project-ID: (.*)`)
 	if err != nil {
 		log.Fatal(err)
 	}
 	rawId := pattern.FindStringSubmatch(tocFile)
+	if len(rawId) == 0 {
+		log.Println("Didn't find X-Curse-Project-ID for addon :" + addon)
+		return "", ""
+	}
 	fixedId := fixParsedString(rawId[1])
 
 	pattern, err = regexp.Compile(`X-Curse-Packaged-Version: (.*)`)
