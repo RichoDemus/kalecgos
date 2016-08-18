@@ -15,8 +15,9 @@ import (
 type addon struct {
 	id string
 	version string
-	//newVersion string
-	//hasNewVersion bool
+	newVersion string
+	hasNewVersion bool
+	url string
 	//successful bool
 }
 
@@ -30,6 +31,7 @@ func main() {
 
 	addons := getAddons(addonsDirectory)
 
+	addons = addVersionDataToAddons(addons)
 
 	f, err := os.Create("addons.html")
 	if err != nil {
@@ -37,25 +39,25 @@ func main() {
 	}
 	defer f.Close()
 
-	f.WriteString("<html><body><h1>Addons:</h1>\n")
+	f.WriteString("<html><body><h1>Addons:</h1><h2>Outdated:</h2><ul>\n")
 
 	for _,addon := range addons {
-		//fmt.Println("Checking addon " + id)
-		url := createAddonUrl(addon.id)
-		//fmt.Println("Addon url: " + url)
-		//fmt.Println("Installed version " + version)
-		page := getWebpage(url)
-		newestVersion := getAddonVersionFromCurseWebpage(page)
-		//fmt.Println("Latest version " + newestVersion)
-		if addon.version != newestVersion {
-			fmt.Println("Found newer version of", addon.id, "(", addon.version, "->", newestVersion, "): ", url)
-			f.WriteString("Newer version of " + addon.id + " ( " + addon.version + " -> " + newestVersion + " ): <a href=\"" + url + "\">Curse link</a><br/>\n")
-		} else {
-			fmt.Println("Addon", addon.id, "(", addon.version, ") is at the latest version")
-			f.WriteString("Addon " + addon.id + " ( " + addon.version + " ) is at the latest version<br/>\n")
+		if addon.hasNewVersion {
+			fmt.Println("Found newer version of", addon.id, "(", addon.version, "->", addon.newVersion, "): ", addon.url)
+			f.WriteString("<li>Newer version of " + addon.id + " ( " + addon.version + " -> " + addon.newVersion + " ): <a href=\"" + addon.url + "\">Curse link</a></li>\n")
 		}
 	}
-	f.WriteString("</body></html>")
+
+	f.WriteString("</ul><h2>Up do date:</h2><ul>\n")
+
+	for _,addon := range addons {
+		if !addon.hasNewVersion {
+			fmt.Println("Addon", addon.id, "(", addon.version, ") is at the latest version")
+			f.WriteString("<li>Addon " + addon.id + " ( " + addon.version + " ) is at the latest version</li>\n")
+		}
+	}
+
+	f.WriteString("</ul></body></html>")
 	f.Sync()
 }
 
@@ -83,6 +85,25 @@ func getAddons(addonsDirectory string) []addon {
 		}
 	}
 	return addons
+}
+
+func addVersionDataToAddons(addons []addon) []addon {
+	result := make([]addon, 0)
+	for _, oldAddon := range addons {
+		oldAddon.url = createAddonUrl(oldAddon.id)
+		page := getWebpage(oldAddon.url)
+		newestVersion := getAddonVersionFromCurseWebpage(page)
+		id := oldAddon.id
+		version := oldAddon.version
+		if oldAddon.version != newestVersion {
+			newAddon := addon{id: id, version: version, newVersion: newestVersion, hasNewVersion: true}
+			result = append(result, newAddon)
+		} else {
+			newAddon := addon{id: id, version: version, hasNewVersion: false}
+			result = append(result, newAddon)
+		}
+	}
+	return result
 }
 
 func getAddonProperties(addon string, tocFile string) (string, string) {
