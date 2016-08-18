@@ -12,6 +12,14 @@ import (
 	"io"
 )
 
+type addon struct {
+	id string
+	version string
+	//newVersion string
+	//hasNewVersion bool
+	//successful bool
+}
+
 func main() {
 	addonsDirectoryPointer := flag.String("addons-directory", "Interface/AddOns/", "Path to the Addons folder")
 
@@ -20,7 +28,7 @@ func main() {
 
 	fmt.Println("Dir:", addonsDirectory)
 
-	var addons = getAddons(addonsDirectory)
+	addons := getAddons(addonsDirectory)
 
 
 	f, err := os.Create("addons.html")
@@ -31,29 +39,29 @@ func main() {
 
 	f.WriteString("<html><body><h1>Addons:</h1>\n")
 
-	for id, version := range addons {
+	for _,addon := range addons {
 		//fmt.Println("Checking addon " + id)
-		url := createAddonUrl(id)
+		url := createAddonUrl(addon.id)
 		//fmt.Println("Addon url: " + url)
 		//fmt.Println("Installed version " + version)
 		page := getWebpage(url)
 		newestVersion := getAddonVersionFromCurseWebpage(page)
 		//fmt.Println("Latest version " + newestVersion)
-		if version != newestVersion {
-			fmt.Println("Found newer version of", id, "(", version, "->", newestVersion, "): ", url)
-			f.WriteString("Newer version of " + id + " ( " + version + " -> " + newestVersion + " ): <a href=\"" + url + "\">Curse link</a><br/>\n")
+		if addon.version != newestVersion {
+			fmt.Println("Found newer version of", addon.id, "(", addon.version, "->", newestVersion, "): ", url)
+			f.WriteString("Newer version of " + addon.id + " ( " + addon.version + " -> " + newestVersion + " ): <a href=\"" + url + "\">Curse link</a><br/>\n")
 		} else {
-			fmt.Println("Addon", id, "(", version, ") is at the latest version")
-			f.WriteString("Addon " + id + " ( " + version + " ) is at the latest version<br/>\n")
+			fmt.Println("Addon", addon.id, "(", addon.version, ") is at the latest version")
+			f.WriteString("Addon " + addon.id + " ( " + addon.version + " ) is at the latest version<br/>\n")
 		}
 	}
 	f.WriteString("</body></html>")
 	f.Sync()
 }
 
-// Takes the path to the addons directory and returns a map where the key is the addon id and the value is the addon version
-func getAddons(addonsDirectory string) map[string]string {
-	var addons = make(map[string]string)
+// Takes the path to the addons directory and returns a slice of addons
+func getAddons(addonsDirectory string) []addon {
+	addons := make([]addon, 0)
 	addonDirectories, _ := ioutil.ReadDir(addonsDirectory)
 	for _, addonDirectory := range addonDirectories {
 		filesInAddonDirectory, err := ioutil.ReadDir(addonsDirectory + "/" + addonDirectory.Name() + "/")
@@ -67,8 +75,9 @@ func getAddons(addonsDirectory string) map[string]string {
 					log.Fatal(err)
 				}
 				id, version := getAddonProperties(addonDirectory.Name(), string(tocFile))
-				if id != "" {
-					addons[id] = version
+				addon := addon{id: id, version: version}
+				if id != "" && !contains(addons, addon){
+					addons = append(addons, addon)
 				}
 			}
 		}
@@ -143,4 +152,13 @@ func getAddonVersionFromCurseWebpage(html string) string {
 	}
 	version := pattern.FindStringSubmatch(html)
 	return version[1]
+}
+
+func contains(s []addon, e addon) bool {
+    for _, a := range s {
+        if a.id == e.id {
+            return true
+        }
+    }
+    return false
 }
