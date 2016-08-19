@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"io"
+	"github.com/skratchdot/open-golang/open"
 )
 
 type addon struct {
@@ -59,6 +60,7 @@ func main() {
 
 	f.WriteString("</ul></body></html>")
 	f.Sync()
+	open.Run("addons.html")
 }
 
 // Takes the path to the addons directory and returns a slice of addons
