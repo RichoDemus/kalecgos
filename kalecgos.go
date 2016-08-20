@@ -14,12 +14,12 @@ import (
 )
 
 type addon struct {
-	id string
-	version string
-	newVersion string
+	id            string
+	version       string
+	newVersion    string
 	hasNewVersion bool
-	url string
-	//successful bool
+	url           string
+	successful    bool
 }
 
 func main() {
@@ -42,8 +42,8 @@ func main() {
 
 	f.WriteString("<html><body><h1>Addons:</h1><h2>Outdated:</h2><ul>\n")
 
-	for _,addon := range addons {
-		if addon.hasNewVersion {
+	for _, addon := range addons {
+		if addon.hasNewVersion && addon.successful {
 			fmt.Println("Found newer version of", addon.id, "(", addon.version, "->", addon.newVersion, "): ", addon.url)
 			f.WriteString("<li>Newer version of " + addon.id + " ( " + addon.version + " -> " + addon.newVersion + " ): <a href=\"" + addon.url + "\">Curse link</a></li>\n")
 		}
@@ -51,10 +51,19 @@ func main() {
 
 	f.WriteString("</ul><h2>Up do date:</h2><ul>\n")
 
-	for _,addon := range addons {
-		if !addon.hasNewVersion {
+	for _, addon := range addons {
+		if !addon.hasNewVersion && addon.successful {
 			fmt.Println("Addon", addon.id, "(", addon.version, ") is at the latest version")
 			f.WriteString("<li>Addon " + addon.id + " ( " + addon.version + " ) is at the latest version</li>\n")
+		}
+	}
+
+	f.WriteString("</ul><h2>Unable to determine if a new version is available:</h2><ul>\n")
+
+	for _, addon := range addons {
+		if !addon.successful {
+			fmt.Println("Failed to scan", addon.id)
+			f.WriteString("<li>Failed to scan addon " + addon.id + "</li>\n")
 		}
 	}
 
@@ -79,10 +88,18 @@ func getAddons(addonsDirectory string) []addon {
 					log.Fatal(err)
 				}
 				id, version := getAddonProperties(addonDirectory.Name(), string(tocFile))
-				addon := addon{id: id, version: version}
-				if id != "" && !contains(addons, addon){
-					addons = append(addons, addon)
+				if version == "" {
+					addon := addon{id: id, successful: false}
+					if id != "" && !contains(addons, addon) {
+						addons = append(addons, addon)
+					}
+				} else {
+					addon := addon{id: id, version: version, successful: true}
+					if id != "" && !contains(addons, addon) {
+						addons = append(addons, addon)
+					}
 				}
+
 			}
 		}
 	}
@@ -92,16 +109,20 @@ func getAddons(addonsDirectory string) []addon {
 func addVersionDataToAddons(addons []addon) []addon {
 	result := make([]addon, 0)
 	for _, oldAddon := range addons {
+		if !oldAddon.successful {
+			result = append(result, oldAddon)
+			continue
+		}
 		oldAddon.url = createAddonUrl(oldAddon.id)
 		page := getWebpage(oldAddon.url)
 		newestVersion := getAddonVersionFromCurseWebpage(page)
 		id := oldAddon.id
 		version := oldAddon.version
 		if oldAddon.version != newestVersion {
-			newAddon := addon{id: id, version: version, newVersion: newestVersion, hasNewVersion: true}
+			newAddon := addon{id: id, version: version, newVersion: newestVersion, hasNewVersion: true, successful:true}
 			result = append(result, newAddon)
 		} else {
-			newAddon := addon{id: id, version: version, hasNewVersion: false}
+			newAddon := addon{id: id, version: version, hasNewVersion: false, successful:true}
 			result = append(result, newAddon)
 		}
 	}
@@ -116,7 +137,7 @@ func getAddonProperties(addon string, tocFile string) (string, string) {
 	rawId := pattern.FindStringSubmatch(tocFile)
 	if len(rawId) == 0 {
 		log.Println("Didn't find X-Curse-Project-ID for addon :" + addon)
-		return "", ""
+		return addon, ""
 	}
 	fixedId := fixParsedString(rawId[1])
 
@@ -178,10 +199,10 @@ func getAddonVersionFromCurseWebpage(html string) string {
 }
 
 func contains(s []addon, e addon) bool {
-    for _, a := range s {
-        if a.id == e.id {
-            return true
-        }
-    }
-    return false
+	for _, a := range s {
+		if a.id == e.id {
+			return true
+		}
+	}
+	return false
 }
