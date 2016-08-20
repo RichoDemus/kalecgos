@@ -113,16 +113,16 @@ func addVersionDataToAddons(addons []addon) []addon {
 			result = append(result, oldAddon)
 			continue
 		}
-		oldAddon.url = createAddonUrl(oldAddon.id)
-		page := getWebpage(oldAddon.url)
+		url := createAddonUrl(oldAddon.id)
+		page := getWebpage(url)
 		newestVersion := getAddonVersionFromCurseWebpage(page)
 		id := oldAddon.id
 		version := oldAddon.version
 		if oldAddon.version != newestVersion {
-			newAddon := addon{id: id, version: version, newVersion: newestVersion, hasNewVersion: true, successful:true}
+			newAddon := addon{id: id, version: version, newVersion: newestVersion, hasNewVersion: true, successful:true, url: url}
 			result = append(result, newAddon)
 		} else {
-			newAddon := addon{id: id, version: version, hasNewVersion: false, successful:true}
+			newAddon := addon{id: id, version: version, hasNewVersion: false, successful:true, url:url}
 			result = append(result, newAddon)
 		}
 	}
