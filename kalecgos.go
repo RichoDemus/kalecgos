@@ -146,10 +146,22 @@ func getAddonProperties(addon string, tocFile string) (string, string) {
 		log.Fatal(err)
 	}
 
+	version := parseVersion(tocFile)
+
+	return fixedId, version
+}
+
+func parseVersion(tocFile string) string {
+	pattern, err := regexp.Compile(`Version: (.*)`)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	rawVersion := pattern.FindStringSubmatch(tocFile)
+
 	fixedVersion := fixParsedString(rawVersion[1])
 
-	return fixedId, fixedVersion
+	return fixedVersion
 }
 
 func fixParsedString(str string) string {
