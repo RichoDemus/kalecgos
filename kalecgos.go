@@ -130,34 +130,43 @@ func addVersionDataToAddons(addons []addon) []addon {
 }
 
 func getAddonProperties(addon string, tocFile string) (string, string) {
+	xId, title := parseAddonId(tocFile)
+	if(len(xId) == 0) {
+		xId = tryToFindAddonOnCurseSite(title)
+	}
+	version := parseVersion(addon, tocFile)
+
+	return xId, version
+}
+
+func parseAddonId(tocFile string) (string, string) {
 	pattern, err := regexp.Compile(`X-Curse-Project-ID: (.*)`)
 	if err != nil {
 		log.Fatal(err)
 	}
 	rawId := pattern.FindStringSubmatch(tocFile)
 	if len(rawId) == 0 {
-		log.Println("Didn't find X-Curse-Project-ID for addon :" + addon)
-		return addon, ""
+		pattern, err = regexp.Compile(`Title: (.*)`)
+		if err != nil {
+			log.Fatal(err)
+		}
+		rawId = pattern.FindStringSubmatch(tocFile)
+		return "", fixParsedString(rawId[1])
 	}
-	fixedId := fixParsedString(rawId[1])
-
-	pattern, err = regexp.Compile(`X-Curse-Packaged-Version: (.*)`)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	version := parseVersion(tocFile)
-
-	return fixedId, version
+	return fixParsedString(rawId[1]), ""
 }
 
-func parseVersion(tocFile string) string {
+func parseVersion(addon string, tocFile string) string {
 	pattern, err := regexp.Compile(`Version: (.*)`)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	rawVersion := pattern.FindStringSubmatch(tocFile)
+	if(len(rawVersion) == 0) {
+		log.Println("Failed to parse version for addon: " + addon)
+		return ""
+	}
 
 	fixedVersion := fixParsedString(rawVersion[1])
 
@@ -177,6 +186,29 @@ func createAddonUrl(id string) string {
 	return "https://mods.curse.com/addons/wow/" + id
 }
 
+func tryToFindAddonOnCurseSite(title string) string {
+	url := createSeatchUrl(title)
+	page := getWebpage(url)
+	if(len(page) == 0) {
+		return ""
+	}
+	id := getAddonIdFromCurseWebpage(page)
+	return id
+}
+
+func getAddonIdFromCurseWebpage(html string) string {
+	pattern, err := regexp.Compile(`<dt><a href="/addons/wow/(.*)">(.*)</a></dt>`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	version := pattern.FindStringSubmatch(html)
+	return version[1]
+}
+
+func createSeatchUrl(title string) string {
+	return "https://mods.curse.com/search?search=" + title
+}
+
 func getWebpage(url string) string {
 	response, err := http.Get(url)
 	if err != nil {
@@ -186,8 +218,10 @@ func getWebpage(url string) string {
 	} else {
 		defer response.Body.Close()
 		if response.StatusCode != 200 {
+			log.Println("Failed to fetch page: " + url)
 			log.Println("Wrong status code: " + response.Status)
-			log.Fatal("Body: " + responseToString(response.Body))
+			log.Println("Body: " + responseToString(response.Body))
+			return ""
 		}
 		return string(responseToString(response.Body))
 	}

@@ -40,7 +40,7 @@ func TestParseVersionFromPage(t *testing.T) {
 }
 
 func TestParseVersionFromTocFileWithXCurseVersion(t *testing.T) {
-	result := parseVersion(`## X-Website: http://www.deadlybossmods.com
+	result := parseVersion("dbm", `## X-Website: http://www.deadlybossmods.com
 	## X-Curse-Packaged-Version: 7.0.1
 	## X-Curse-Project-Name: Deadly Boss Mods
 	## X-Curse-Project-ID: deadly-boss-mods
@@ -53,7 +53,7 @@ func TestParseVersionFromTocFileWithXCurseVersion(t *testing.T) {
 }
 
 func TestParseVersionFromTocFileNormalVersion(t *testing.T) {
-	result := parseVersion(`## X-Website: http://www.deadlybossmods.com
+	result := parseVersion("dbm", `## X-Website: http://www.deadlybossmods.com
 	## Version: 2.8.3
 	## X-Curse-Project-Name: Deadly Boss Mods
 	## X-Curse-Project-ID: deadly-boss-mods
@@ -61,6 +61,24 @@ func TestParseVersionFromTocFileNormalVersion(t *testing.T) {
 
 	if result != "2.8.3" {
 		t.Log("Wrong version: " + result)
+		t.Fail()
+	}
+}
+
+func TestParseIDFromPage(t *testing.T) {
+	result := getAddonIdFromCurseWebpage(`<tr class="wow">
+	    <td>
+	        <dl>
+	            <dt><a href="/addons/wow/dominos">Dominos</a></dt>
+
+	                <dd>Project Manager: <a href="/members/Tuller">Tuller</a></dd>
+
+	        </dl>
+	    </td>
+	`)
+
+	if result != "dominos" {
+		t.Log("Wrong id: " + result)
 		t.Fail()
 	}
 }
