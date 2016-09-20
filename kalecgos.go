@@ -8,6 +8,7 @@ import (
 	"log"
 	"regexp"
 	"net/http"
+	"net/url"
 	"os"
 	"io"
 	"github.com/skratchdot/open-golang/open"
@@ -209,8 +210,14 @@ func createSeatchUrl(title string) string {
 	return "https://mods.curse.com/search?search=" + title
 }
 
-func getWebpage(url string) string {
-	response, err := http.Get(url)
+func getWebpage(webpageUrl string) string {
+	encodedUrl, err := url.Parse(webpageUrl) // move to create url I think
+	if err != nil {
+		log.Println("Failed to create url: " + err)
+		return ""
+	}
+	println(encodedUrl.RawPath)
+	response, err := http.Get(encodedUrl)
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(1)
@@ -218,7 +225,7 @@ func getWebpage(url string) string {
 	} else {
 		defer response.Body.Close()
 		if response.StatusCode != 200 {
-			log.Println("Failed to fetch page: " + url)
+			log.Println("Failed to fetch page: " + encodedUrl)
 			log.Println("Wrong status code: " + response.Status)
 			log.Println("Body: " + responseToString(response.Body))
 			return ""
