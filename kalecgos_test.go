@@ -31,7 +31,7 @@ func TestCreateAddonURL(t *testing.T) {
 }
 
 func TestParseVersionFromPage(t *testing.T) {
-	version := getAddonVersionFromCurseWebpage(`<li class="newest-file">Newest File: 7.0.3.7</li>`)
+	version := getAddonVersionFromCurseWebpage("DBM", `<li class="newest-file">Newest File: 7.0.3.7</li>`)
 
 	if version != "7.0.3.7" {
 		t.Log("Wrong version: " + version)
@@ -40,7 +40,7 @@ func TestParseVersionFromPage(t *testing.T) {
 }
 
 func TestParseVersionFromTocFileWithXCurseVersion(t *testing.T) {
-	result := parseVersion(`## X-Website: http://www.deadlybossmods.com
+	result := parseVersion("dbm", `## X-Website: http://www.deadlybossmods.com
 	## X-Curse-Packaged-Version: 7.0.1
 	## X-Curse-Project-Name: Deadly Boss Mods
 	## X-Curse-Project-ID: deadly-boss-mods
@@ -53,7 +53,7 @@ func TestParseVersionFromTocFileWithXCurseVersion(t *testing.T) {
 }
 
 func TestParseVersionFromTocFileNormalVersion(t *testing.T) {
-	result := parseVersion(`## X-Website: http://www.deadlybossmods.com
+	result := parseVersion("dbm", `## X-Website: http://www.deadlybossmods.com
 	## Version: 2.8.3
 	## X-Curse-Project-Name: Deadly Boss Mods
 	## X-Curse-Project-ID: deadly-boss-mods
@@ -61,6 +61,33 @@ func TestParseVersionFromTocFileNormalVersion(t *testing.T) {
 
 	if result != "2.8.3" {
 		t.Log("Wrong version: " + result)
+		t.Fail()
+	}
+}
+
+func TestParseIDFromPage(t *testing.T) {
+	result := getAddonIdFromCurseWebpage("Dominos", `<tr class="wow">
+	    <td>
+	        <dl>
+	            <dt><a href="/addons/wow/dominos">Dominos</a></dt>
+
+	                <dd>Project Manager: <a href="/members/Tuller">Tuller</a></dd>
+
+	        </dl>
+	    </td>
+	`)
+
+	if result != "dominos" {
+		t.Log("Wrong id: " + result)
+		t.Fail()
+	}
+}
+
+func TestCreateSearchUrl(t *testing.T) {
+	result := createSeatchUrl("Deadly Boss Mods")
+
+	if result != "https://mods.curse.com/search?search=Deadly+Boss+Mods" {
+		t.Log("Wrong url: " + result)
 		t.Fail()
 	}
 }

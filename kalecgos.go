@@ -8,6 +8,7 @@ import (
 	"log"
 	"regexp"
 	"net/http"
+	"net/url"
 	"os"
 	"io"
 	"github.com/skratchdot/open-golang/open"
@@ -115,7 +116,7 @@ func addVersionDataToAddons(addons []addon) []addon {
 		}
 		url := createAddonUrl(oldAddon.id)
 		page := getWebpage(url)
-		newestVersion := getAddonVersionFromCurseWebpage(page)
+		newestVersion := getAddonVersionFromCurseWebpage(oldAddon.id, page)
 		id := oldAddon.id
 		version := oldAddon.version
 		if oldAddon.version != newestVersion {
@@ -130,34 +131,43 @@ func addVersionDataToAddons(addons []addon) []addon {
 }
 
 func getAddonProperties(addon string, tocFile string) (string, string) {
+	xId, title := parseAddonId(tocFile)
+	if(len(xId) == 0) {
+		xId = tryToFindAddonOnCurseSite(title)
+	}
+	version := parseVersion(addon, tocFile)
+
+	return xId, version
+}
+
+func parseAddonId(tocFile string) (string, string) {
 	pattern, err := regexp.Compile(`X-Curse-Project-ID: (.*)`)
 	if err != nil {
 		log.Fatal(err)
 	}
 	rawId := pattern.FindStringSubmatch(tocFile)
 	if len(rawId) == 0 {
-		log.Println("Didn't find X-Curse-Project-ID for addon :" + addon)
-		return addon, ""
+		pattern, err = regexp.Compile(`Title: (.*)`)
+		if err != nil {
+			log.Fatal(err)
+		}
+		rawId = pattern.FindStringSubmatch(tocFile)
+		return "", fixParsedString(rawId[1])
 	}
-	fixedId := fixParsedString(rawId[1])
-
-	pattern, err = regexp.Compile(`X-Curse-Packaged-Version: (.*)`)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	version := parseVersion(tocFile)
-
-	return fixedId, version
+	return fixParsedString(rawId[1]), ""
 }
 
-func parseVersion(tocFile string) string {
+func parseVersion(addon string, tocFile string) string {
 	pattern, err := regexp.Compile(`Version: (.*)`)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	rawVersion := pattern.FindStringSubmatch(tocFile)
+	if(len(rawVersion) == 0) {
+		log.Println("Failed to parse version for addon: " + addon)
+		return ""
+	}
 
 	fixedVersion := fixParsedString(rawVersion[1])
 
@@ -173,8 +183,36 @@ func fixParsedString(str string) string {
 	return str
 }
 
+func tryToFindAddonOnCurseSite(title string) string {
+	url := createSeatchUrl(title)
+	page := getWebpage(url)
+	if(len(page) == 0) {
+		return ""
+	}
+	id := getAddonIdFromCurseWebpage(title, page)
+	return id
+}
+
+func getAddonIdFromCurseWebpage(title string, html string) string {
+	pattern, err := regexp.Compile(`<dt><a href="/addons/wow/(.*)">(.*)</a></dt>`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	version := pattern.FindStringSubmatch(html)
+	if len(version) == 0 {
+		log.Println("Didn't find addon id when searhing curse page for addon ",title)
+		return title
+	}
+	return version[1]
+}
+
 func createAddonUrl(id string) string {
-	return "https://mods.curse.com/addons/wow/" + id
+	return "https://mods.curse.com/addons/wow/" + url.QueryEscape(id)
+}
+
+func createSeatchUrl(title string) string {
+	searchUrl,_ := url.Parse("https://mods.curse.com/search?search=" + url.QueryEscape(title))
+	return searchUrl.String()
 }
 
 func getWebpage(url string) string {
@@ -186,8 +224,10 @@ func getWebpage(url string) string {
 	} else {
 		defer response.Body.Close()
 		if response.StatusCode != 200 {
+			log.Println("Failed to fetch page: " + url)
 			log.Println("Wrong status code: " + response.Status)
-			log.Fatal("Body: " + responseToString(response.Body))
+			log.Println("Body: " + responseToString(response.Body))
+			return ""
 		}
 		return string(responseToString(response.Body))
 	}
@@ -201,12 +241,16 @@ func responseToString(body io.ReadCloser) string {
 	return string(bs)
 }
 
-func getAddonVersionFromCurseWebpage(html string) string {
+func getAddonVersionFromCurseWebpage(addon string, html string) string {
 	pattern, err := regexp.Compile(`<li class="newest-file">Newest File: (.*)</li>`)
 	if err != nil {
 		log.Fatal(err)
 	}
 	version := pattern.FindStringSubmatch(html)
+	if len(version) == 0 {
+		log.Println("Didn't find addon version for addon ",addon)
+		return ""
+	}
 	return version[1]
 }
 
