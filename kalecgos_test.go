@@ -31,7 +31,7 @@ func TestCreateAddonURL(t *testing.T) {
 }
 
 func TestParseVersionFromPage(t *testing.T) {
-	version := getAddonVersionFromCurseWebpage(`<li class="newest-file">Newest File: 7.0.3.7</li>`)
+	version := getAddonVersionFromCurseWebpage("DBM", `<li class="newest-file">Newest File: 7.0.3.7</li>`)
 
 	if version != "7.0.3.7" {
 		t.Log("Wrong version: " + version)
@@ -66,7 +66,7 @@ func TestParseVersionFromTocFileNormalVersion(t *testing.T) {
 }
 
 func TestParseIDFromPage(t *testing.T) {
-	result := getAddonIdFromCurseWebpage(`<tr class="wow">
+	result := getAddonIdFromCurseWebpage("Dominos", `<tr class="wow">
 	    <td>
 	        <dl>
 	            <dt><a href="/addons/wow/dominos">Dominos</a></dt>

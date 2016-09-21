@@ -207,7 +207,7 @@ func getAddonIdFromCurseWebpage(title string, html string) string {
 }
 
 func createAddonUrl(id string) string {
-	return "https://mods.curse.com/addons/wow/" + id
+	return "https://mods.curse.com/addons/wow/" + url.QueryEscape(id)
 }
 
 func createSeatchUrl(title string) string {
