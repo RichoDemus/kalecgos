@@ -116,7 +116,7 @@ func addVersionDataToAddons(addons []addon) []addon {
 		}
 		url := createAddonUrl(oldAddon.id)
 		page := getWebpage(url)
-		newestVersion := getAddonVersionFromCurseWebpage(page)
+		newestVersion := getAddonVersionFromCurseWebpage(oldAddon.id, page)
 		id := oldAddon.id
 		version := oldAddon.version
 		if oldAddon.version != newestVersion {
@@ -183,41 +183,40 @@ func fixParsedString(str string) string {
 	return str
 }
 
-func createAddonUrl(id string) string {
-	return "https://mods.curse.com/addons/wow/" + id
-}
-
 func tryToFindAddonOnCurseSite(title string) string {
 	url := createSeatchUrl(title)
 	page := getWebpage(url)
 	if(len(page) == 0) {
 		return ""
 	}
-	id := getAddonIdFromCurseWebpage(page)
+	id := getAddonIdFromCurseWebpage(title, page)
 	return id
 }
 
-func getAddonIdFromCurseWebpage(html string) string {
+func getAddonIdFromCurseWebpage(title string, html string) string {
 	pattern, err := regexp.Compile(`<dt><a href="/addons/wow/(.*)">(.*)</a></dt>`)
 	if err != nil {
 		log.Fatal(err)
 	}
 	version := pattern.FindStringSubmatch(html)
+	if len(version) == 0 {
+		log.Println("Didn't find addon id when searhing curse page for addon ",title)
+		return title
+	}
 	return version[1]
 }
 
-func createSeatchUrl(title string) string {
-	return "https://mods.curse.com/search?search=" + title
+func createAddonUrl(id string) string {
+	return "https://mods.curse.com/addons/wow/" + id
 }
 
-func getWebpage(webpageUrl string) string {
-	encodedUrl, err := url.Parse(webpageUrl) // move to create url I think
-	if err != nil {
-		log.Println("Failed to create url: " + err)
-		return ""
-	}
-	println(encodedUrl.RawPath)
-	response, err := http.Get(encodedUrl)
+func createSeatchUrl(title string) string {
+	searchUrl,_ := url.Parse("https://mods.curse.com/search?search=" + url.QueryEscape(title))
+	return searchUrl.String()
+}
+
+func getWebpage(url string) string {
+	response, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(1)
@@ -225,7 +224,7 @@ func getWebpage(webpageUrl string) string {
 	} else {
 		defer response.Body.Close()
 		if response.StatusCode != 200 {
-			log.Println("Failed to fetch page: " + encodedUrl)
+			log.Println("Failed to fetch page: " + url)
 			log.Println("Wrong status code: " + response.Status)
 			log.Println("Body: " + responseToString(response.Body))
 			return ""
@@ -242,12 +241,16 @@ func responseToString(body io.ReadCloser) string {
 	return string(bs)
 }
 
-func getAddonVersionFromCurseWebpage(html string) string {
+func getAddonVersionFromCurseWebpage(addon string, html string) string {
 	pattern, err := regexp.Compile(`<li class="newest-file">Newest File: (.*)</li>`)
 	if err != nil {
 		log.Fatal(err)
 	}
 	version := pattern.FindStringSubmatch(html)
+	if len(version) == 0 {
+		log.Println("Didn't find addon version for addon ",addon)
+		return ""
+	}
 	return version[1]
 }
 

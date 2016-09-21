@@ -82,3 +82,12 @@ func TestParseIDFromPage(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestCreateSearchUrl(t *testing.T) {
+	result := createSeatchUrl("Deadly Boss Mods")
+
+	if result != "https://mods.curse.com/search?search=Deadly+Boss+Mods" {
+		t.Log("Wrong url: " + result)
+		t.Fail()
+	}
+}
